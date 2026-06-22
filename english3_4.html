@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三年级 Unit 4 单词朗读</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>三年级 Unit 4 单词朗读</h1>
+    <p style="color: #666; font-size: 13px;">提示：点击单词可试听并设为朗读【起点】，然后点击"开始朗读"。</p>
+    <hr>
+
+    <div class="controls">
+        <label>每词重复：
+            <input type="number" id="repeatCount" min="1" max="10" value="2"> 次
+        </label>
+        
+        <label>语速：
+            <input type="range" id="speedControl" min="0.5" max="2" step="0.1" value="0.8" oninput="document.getElementById('speedValue').innerText = this.value">
+            <span id="speedValue">0.8</span> 
+        </label>
+
+        <label>拼读间隔：
+            <input type="number" id="spellInterval" min="0" max="2000" step="10" value="50"> 毫秒
+        </label>
+
+        <button id="startBtn" onclick="startReading()">开始朗读</button>
+        <button class="stop" id="stopBtn" onclick="stopReading()">停止</button>
+    </div>
+
+    <div class="word-list" id="wordListContainer"></div>
+</div>
+
+<audio id="audioPlayer"></audio>
+
+<script src="script.js"></script>
+<script>
+    // Unit 4 单词数据
+    const unit4Words = [
+        { word: "weather", spell: "w-e-a-t-h-e-r", phonetic: "/ˈweðə/", cn: "天气" },
+        { word: "bookshop", spell: "b-o-o-k-s-h-o-p", phonetic: "/ˈbʊkʃɒp/", cn: "书店" },
+        { word: "rain", spell: "r-a-i-n", phonetic: "/reɪn/", cn: "雨" },
+        { word: "sun", spell: "s-u-n", phonetic: "/sʌn/", cn: "阳光" },
+        { word: "wait", spell: "w-a-i-t", phonetic: "/weɪt/", cn: "等" },
+        { word: "wet", spell: "w-e-t", phonetic: "/wet/", cn: "湿的" },
+        { word: "rainy", spell: "r-a-i-n-y", phonetic: "/ˈreɪni/", cn: "多雨的" },
+        { word: "again", spell: "a-g-a-i-n", phonetic: "/əˈɡeɪn/", cn: "又" },
+        { word: "run", spell: "r-u-n", phonetic: "/rʌn/", cn: "跑" },
+        { word: "dry", spell: "d-r-y", phonetic: "/draɪ/", cn: "干燥的" },
+        { word: "windy", spell: "w-i-n-d-y", phonetic: "/ˈwɪndi/", cn: "多风的" },
+        { word: "sell", spell: "s-e-l-l", phonetic: "/sel/", cn: "卖" },
+        { word: "fly", spell: "f-l-y", phonetic: "/flaɪ/", cn: "放飞" },
+        { word: "these", spell: "t-h-e-s-e", phonetic: "/ðiːz/", cn: "this的复数形式" },
+        { word: "kite", spell: "k-i-t-e", phonetic: "/kaɪt/", cn: "风筝" },
+        { word: "idea", spell: "i-d-e-a", phonetic: "/aɪˈdɪə/", cn: "主意" },
+        { word: "park", spell: "p-a-r-k", phonetic: "/pɑːk/", cn: "公园" },
+        { word: "club", spell: "c-l-u-b", phonetic: "/klʌb/", cn: "俱乐部" },
+        { word: "hot", spell: "h-o-t", phonetic: "/hɒt/", cn: "炎热的" },
+        { word: "welcome", spell: "w-e-l-c-o-m-e", phonetic: "/ˈwelkəm/", cn: "欢迎" },
+        { word: "sunny", spell: "s-u-n-n-y", phonetic: "/ˈsʌni/", cn: "阳光充足的" },
+        { word: "stand", spell: "s-t-a-n-d", phonetic: "/stænd/", cn: "站立" },
+        { word: "swim", spell: "s-w-i-m", phonetic: "/swɪm/", cn: "游泳" },
+        { word: "board", spell: "b-o-a-r-d", phonetic: "/bɔːd/", cn: "公告牌" },
+        { word: "water", spell: "w-a-t-e-r", phonetic: "/ˈwɔːtə/", cn: "水" },
+        { word: "walk", spell: "w-a-l-k", phonetic: "/wɔːk/", cn: "走" },
+        { word: "cold", spell: "c-o-l-d", phonetic: "/kəʊld/", cn: "寒冷的" },
+        { word: "carefully", spell: "c-a-r-e-f-u-l-l-y", phonetic: "/ˈkeəfəli/", cn: "小心地" },
+        { word: "snowy", spell: "s-n-o-w-y", phonetic: "/ˈsnəʊi/", cn: "多雪的" },
+        { word: "tree", spell: "t-r-e-e", phonetic: "/triː/", cn: "树" },
+        { word: "throw", spell: "t-h-r-o-w", phonetic: "/θrəʊ/", cn: "投，扔" },
+        { word: "spring", spell: "s-p-r-i-n-g", phonetic: "/sprɪŋ/", cn: "春天" },
+        { word: "snowball", spell: "s-n-o-w-b-a-l-l", phonetic: "/ˈsnəʊbɔːl/", cn: "雪球" },
+        { word: "summer", spell: "s-u-m-m-e-r", phonetic: "/ˈsʌmə/", cn: "夏天" },
+        { word: "umbrella", spell: "u-m-b-r-e-l-l-a", phonetic: "/ʌmˈbrelə/", cn: "雨伞" },
+        { word: "autumn", spell: "a-u-t-u-m-n", phonetic: "/ˈɔːtəm/", cn: "秋天" },
+        { word: "warm", spell: "w-a-r-m", phonetic: "/wɔːm/", cn: "保暖的" },
+        { word: "music", spell: "m-u-s-i-c", phonetic: "/ˈmjuːzɪk/", cn: "音乐" }
+    ];
+
+    // 初始化
+    init(unit4Words);
+</script>
+
+</body>
+</html>
