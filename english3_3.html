@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三年级 Unit 3 单词朗读</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>三年级 Unit 3 单词朗读</h1>
+    <p style="color: #666; font-size: 13px;">提示：点击单词可试听并设为朗读【起点】，然后点击"开始朗读"。</p>
+    <hr>
+
+    <div class="controls">
+        <label>每词重复：
+            <input type="number" id="repeatCount" min="1" max="10" value="2"> 次
+        </label>
+        
+        <label>语速：
+            <input type="range" id="speedControl" min="0.5" max="2" step="0.1" value="0.8" oninput="document.getElementById('speedValue').innerText = this.value">
+            <span id="speedValue">0.8</span> 
+        </label>
+
+        <label>拼读间隔：
+            <input type="number" id="spellInterval" min="0" max="2000" step="10" value="50"> 毫秒
+        </label>
+
+        <button id="startBtn" onclick="startReading()">开始朗读</button>
+        <button class="stop" id="stopBtn" onclick="stopReading()">停止</button>
+    </div>
+
+    <div class="word-list" id="wordListContainer"></div>
+</div>
+
+<audio id="audioPlayer"></audio>
+
+<script src="script.js"></script>
+<script>
+    // Unit 3 单词数据
+    const unit3Words = [
+        { word: "so", spell: "s-o", phonetic: "/səʊ/", cn: "这么，如此" },
+        { word: "cool", spell: "c-o-o-l", phonetic: "/kuːl/", cn: "酷的" },
+        { word: "clothes", spell: "c-l-o-t-h-e-s", phonetic: "/kləʊðz/", cn: "衣服" },
+        { word: "wear", spell: "w-e-a-r", phonetic: "/weə/", cn: "穿" },
+        { word: "cap", spell: "c-a-p", phonetic: "/kæp/", cn: "（有帽舌的）帽子" },
+        { word: "T-shirt", spell: "T-s-h-i-r-t", phonetic: "/ˈtiːʃɜːt/", cn: "T恤" },
+        { word: "trousers", spell: "t-r-o-u-s-e-r-s", phonetic: "/ˈtraʊzəz/", cn: "裤子" },
+        { word: "sock", spell: "s-o-c-k", phonetic: "/sɒk/", cn: "袜子" },
+        { word: "shiny", spell: "s-h-i-n-y", phonetic: "/ˈʃaɪni/", cn: "有光泽的" },
+        { word: "shoe", spell: "s-h-o-e", phonetic: "/ʃuː/", cn: "鞋" },
+        { word: "dress", spell: "d-r-e-s-s", phonetic: "/dres/", cn: "连衣裙" },
+        { word: "sweater", spell: "s-w-e-a-t-e-r", phonetic: "/ˈswetə/", cn: "毛线衣" },
+        { word: "skirt", spell: "s-k-i-r-t", phonetic: "/skɜːt/", cn: "半身裙" },
+        { word: "shirt", spell: "s-h-i-r-t", phonetic: "/ʃɜːt/", cn: "衬衫" },
+        { word: "coat", spell: "c-o-a-t", phonetic: "/kəʊt/", cn: "外套" },
+        { word: "shorts", spell: "s-h-o-r-t-s", phonetic: "/ʃɔːts/", cn: "短裤" },
+        { word: "king", spell: "k-i-n-g", phonetic: "/kɪŋ/", cn: "国王" },
+        { word: "want", spell: "w-a-n-t", phonetic: "/wɒnt/", cn: "想要" },
+        { word: "beautiful", spell: "b-e-a-u-t-i-f-u-l", phonetic: "/ˈbjuːtɪfl/", cn: "美丽的" },
+        { word: "make", spell: "m-a-k-e", phonetic: "/meɪk/", cn: "做" },
+        { word: "magic", spell: "m-a-g-i-c", phonetic: "/ˈmædʒɪk/", cn: "神奇的" },
+        { word: "people", spell: "p-e-o-p-l-e", phonetic: "/ˈpiːpl/", cn: "人" },
+        { word: "them", spell: "t-h-e-m", phonetic: "/ðem/", cn: "它们" },
+        { word: "after", spell: "a-f-t-e-r", phonetic: "/ˈɑːftə/", cn: "在……后" },
+        { word: "month", spell: "m-o-n-t-h", phonetic: "/mʌnθ/", cn: "一个月；月" },
+        { word: "try", spell: "t-r-y", phonetic: "/traɪ/", cn: "试" },
+        { word: "try sth on", spell: "t-r-y s-t-h o-n", phonetic: "/traɪ sʌm ɒn/", cn: "试穿" },
+        { word: "why", spell: "w-h-y", phonetic: "/waɪ/", cn: "为什么" },
+        { word: "wonderful", spell: "w-o-n-d-e-r-f-u-l", phonetic: "/ˈwʌndəfl/", cn: "令人惊叹的" },
+        { word: "most", spell: "m-o-s-t", phonetic: "/məʊst/", cn: "最" },
+        { word: "any", spell: "a-n-y", phonetic: "/ˈeni/", cn: "任何的" },
+        { word: "or", spell: "o-r", phonetic: "/ɔː/", cn: "或" },
+        { word: "fox", spell: "f-o-x", phonetic: "/fɒks/", cn: "狐狸" },
+        { word: "monkey", spell: "m-o-n-k-e-y", phonetic: "/ˈmʌŋki/", cn: "猴子" },
+        { word: "tell", spell: "t-e-l-l", phonetic: "/tel/", cn: "告诉；说出" },
+        { word: "truth", spell: "t-r-u-t-h", phonetic: "/truːθ/", cn: "真相" },
+        { word: "wash", spell: "w-a-s-h", phonetic: "/wɒʃ/", cn: "洗" },
+        { word: "hang", spell: "h-a-n-g", phonetic: "/hæŋ/", cn: "悬挂" },
+        { word: "hat", spell: "h-a-t", phonetic: "/hæt/", cn: "帽子" },
+        { word: "jeans", spell: "j-e-a-n-s", phonetic: "/dʒiːnz/", cn: "牛仔裤" },
+        { word: "boot", spell: "b-o-o-t", phonetic: "/buːt/", cn: "靴子" },
+        { word: "robe", spell: "r-o-b-e", phonetic: "/rəʊb/", cn: "长袍" }
+    ];
+
+    // 初始化
+    init(unit3Words);
+</script>
+
+</body>
+</html>
