@@ -1,0 +1,89 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f9f9f9;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.word-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.word-item {
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.word-item:hover {
+    background: #f0f0f0;
+    transform: translateY(-2px);
+}
+
+.word-item.highlight {
+    background-color: #ffeb3b;
+    border-color: #ffc107;
+}
+
+.word-item.selected {
+    border-color: #28a745;
+    border-width: 2px;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.3);
+}
+
+.word-item.selected::after {
+    content: "起点";
+    position: absolute;
+    top: -5px;
+    right: 5px;
+    background: #28a745;
+    color: white;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    background-color: #0078d4;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #005a9e;
+}
+
+button.stop {
+    background-color: #d83b01;
+}
+
+input[type="number"] {
+    width: 50px;
+    padding: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
