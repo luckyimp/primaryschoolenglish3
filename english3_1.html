@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三年级 Unit 1 单词朗读器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, -apple-system, sans-serif}
+body{padding:12px;padding-top:80px;max-width:1000px;margin:0 auto;background:#fff}
+h1{text-align:center;color:#222;margin:10px 0 16px;font-size:22px}
+
+/* 控制栏固定在顶部 */
+.ctrl-bar{
+position:fixed;top:0;left:0;right:0;
+background:#f0f7ff;padding:10px 14px;
+display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;
+z-index:999;box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+button{
+padding:8px 14px;border:none;border-radius:8px;
+background:#007aff;color:#fff;font-size:14px;cursor:pointer;
+}
+button.stop{background:#ff3b30}
+input[type="number"]{
+width:55px;padding:6px;border:1px solid #ddd;border-radius:6px;
+font-size:14px;text-align:center;
+}
+input[type="range"]{width:120px;vertical-align:middle}
+.speed-num{font-size:14px;color:#333;font-weight:bold;margin-left:4px;}
+.ctrl-bar label{font-size:14px;display:flex;align-items:center;gap:4px}
+
+.word-list{
+border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;
+}
+.word-item{
+display:grid;
+grid-template-columns:80px 130px 100px 1fr;
+gap:8px;padding:12px 10px;
+border-bottom:1px solid #f0f0f0;
+align-items:center;cursor:pointer;
+font-size:15px;
+}
+.word-item:last-child{border-bottom:none}
+.word-item.active{
+background:#e1f5fe;color:#000;
+border-left:4px solid #007aff;font-weight:bold;
+}
+.en{font-weight:bold}
+.split{color:#444}
+.phon{color:#00796b}
+.cn{color:#e65100}
+
+@media (max-width:600px){
+body{padding-top:130px}
+.word-item{
+grid-template-columns:70px 100px 80px 1fr;
+gap:6px;padding:10px 8px;font-size:14px;
+}
+h1{font-size:20px}
+.ctrl-bar{padding:8px 10px;gap:8px}
+button{padding:7px 12px;font-size:13px}
+input[type="range"]{width:100px}
+}
+</style>
+</head>
+
+<body>
+<h1>三年级 Unit 1 单词朗读</h1>
+
+<div class="ctrl-bar">
+<label>每词重复：<input type="number" id="loopNum" value="2" min="1"></label>
+<label>语速：<input type="range" id="rate" min="0.4" max="1.2" step="0.05" value="0.8"></label>
+<span class="speed-num" id="speedNum">0.8</span>
+<button onclick="startRead()">开始朗读</button>
+<button class="stop" onclick="stopRead()">停止</button>
+</div>
+
+<div class="word-list" id="wordList">
+<div class="word-item"><span class="en">feeling</span><span class="split">f-e-e-l-i-n-g</span><span class="phon">/ˈfiːlɪŋ/</span><span class="cn">感觉</span></div>
+<div class="word-item"><span class="en">tired</span><span class="split">t-i-r-e-d</span><span class="phon">/ˈtaɪəd/</span><span class="cn">疲惫的</span></div>
+<div class="word-item"><span class="en">sad</span><span class="split">s-a-d</span><span class="phon">/sæd/</span><span class="cn">难过的</span></div>
+<div class="word-item"><span class="en">angry</span><span class="split">a-n-g-r-y</span><span class="phon">/ˈæŋɡri/</span><span class="cn">生气的</span></div>
+<div class="word-item"><span class="en">scared</span><span class="split">s-c-a-r-e-d</span><span class="phon">/skeəd/</span><span class="cn">害怕的</span></div>
+<div class="word-item"><span class="en">cry</span><span class="split">c-r-y</span><span class="phon">/kraɪ/</span><span class="cn">哭</span></div>
+<div class="word-item"><span class="en">laugh</span><span class="split">l-a-u-g-h</span><span class="phon">/lɑːf/</span><span class="cn">笑</span></div>
+<div class="word-item"><span class="en">stamp</span><span class="split">s-t-a-m-p</span><span class="phon">/stæmp/</span><span class="cn">跺（脚）</span></div>
+<div class="word-item"><span class="en">sleep</span><span class="split">s-l-e-e-p</span><span class="phon">/sliːp/</span><span class="cn">睡觉</span></div>
+<div class="word-item"><span class="en">new</span><span class="split">n-e-w</span><span class="phon">/njuː/</span><span class="cn">新的</span></div>
+<div class="word-item"><span class="en">game</span><span class="split">g-a-m-e</span><span class="phon">/ɡeɪm/</span><span class="cn">游戏</span></div>
+<div class="word-item"><span class="en">excited</span><span class="split">e-x-c-i-t-e-d</span><span class="phon">/ɪkˈsaɪtɪd/</span><span class="cn">兴奋的</span></div>
+<div class="word-item"><span class="en">sorry</span><span class="split">s-o-r-r-y</span><span class="phon">/ˈsɒri/</span><span class="cn">对不起</span></div>
+<div class="word-item"><span class="en">like</span><span class="split">l-i-k-e</span><span class="phon">/laɪk/</span><span class="cn">喜欢</span></div>
+<div class="word-item"><span class="en">but</span><span class="split">b-u-t</span><span class="phon">/bʌt/</span><span class="cn">但是</span></div>
+<div class="word-item"><span class="en">unhappy</span><span class="split">u-n-h-a-p-p-y</span><span class="phon">/ʌnˈhæpi/</span><span class="cn">不开心的</span></div>
+<div class="word-item"><span class="en">worried</span><span class="split">w-o-r-r-i-e-d</span><span class="phon">/ˈwʌrid/</span><span class="cn">担心的</span></div>
+<div class="word-item"><span class="en">not</span><span class="split">n-o-t</span><span class="phon">/nɒt/</span><span class="cn">不，不是</span></div>
+<div class="word-item"><span class="en">feel</span><span class="split">f-e-e-l</span><span class="phon">/fiːl/</span><span class="cn">感觉到，觉得</span></div>
+<div class="word-item"><span class="en">find</span><span class="split">f-i-n-d</span><span class="phon">/faɪnd/</span><span class="cn">找到</span></div>
+<div class="word-item"><span class="en">doll</span><span class="split">d-o-l-l</span><span class="phon">/dɒl/</span><span class="cn">玩偶</span></div>
+<div class="word-item"><span class="en">football</span><span class="split">f-o-o-t-b-a-l-l</span><span class="phon">/ˈfʊtbɔːl/</span><span class="cn">足球</span></div>
+<div class="word-item"><span class="en">eat</span><span class="split">e-a-t</span><span class="phon">/iːt/</span><span class="cn">吃</span></div>
+<div class="word-item"><span class="en">his</span><span class="split">h-i-s</span><span class="phon">/hɪz/</span><span class="cn">他的</span></div>
+<div class="word-item"><span class="en">cake</span><span class="split">c-a-k-e</span><span class="phon">/keɪk/</span><span class="cn">蛋糕</span></div>
+<div class="word-item"><span class="en">big</span><span class="split">b-i-g</span><span class="phon">/bɪɡ/</span><span class="cn">大的</span></div>
+<div class="word-item"><span class="en">mouse</span><span class="split">m-o-u-s-e</span><span class="phon">/maʊs/</span><span class="cn">老鼠</span></div>
+</div>
+
+<script>
+let rate = document.getElementById('rate');
+let speedNum = document.getElementById('speedNum');
+rate.addEventListener('input', () => {
+speedNum.textContent = rate.value;
+});
+
+let words = document.querySelectorAll('.word-item');
+let isReading = false;
+let currentIndex = 0;
+let loopTimes = 2;
+let readSpeed = 0.8;
+
+function speak(text, lang) {
+return new Promise(resolve => {
+const u = new SpeechSynthesisUtterance(text);
+u.rate = readSpeed;
+const voices = speechSynthesis.getVoices();
+if (lang === 'en') {
+const v = voices.find(i => i.lang.startsWith('en'));
+if (v) u.voice = v;
+} else {
+const v = voices.find(i => i.lang.startsWith('zh'));
+if (v) u.voice = v;
+}
+speechSynthesis.speak(u);
+u.onend = resolve;
+});
+}
+
+function highlight(index) {
+words.forEach((w, i) => {
+w.classList.toggle('active', i === index);
+});
+setTimeout(() => {
+const el = words[index];
+el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}, 100);
+}
+
+async function readWord(index) {
+if (!isReading) return;
+if (index >= words.length) {
+isReading = false;
+words.forEach(w => w.classList.remove('active'));
+return;
+}
+highlight(index);
+const en = words[index].querySelector('.en').innerText;
+const cn = words[index].querySelector('.cn').innerText;
+const spell = en.split('').join(' ');
+loopTimes = parseInt(document.getElementById('loopNum').value) || 2;
+readSpeed = parseFloat(document.getElementById('rate').value);
+
+for (let i = 0; i < loopTimes; i++) {
+if (!isReading) return;
+await speak(en, 'en');
+await speak(spell, 'en');
+await speak(cn, 'zh');
+await new Promise(r => setTimeout(r, 600));
+}
+currentIndex = index + 1;
+await readWord(currentIndex);
+}
+
+function startRead() {
+stopRead();
+isReading = true;
+readWord(currentIndex);
+}
+
+function stopRead() {
+isReading = false;
+speechSynthesis.cancel();
+}
+
+words.forEach((w, idx) => {
+w.onclick = () => {
+currentIndex = idx;
+if (isReading) {
+stopRead();
+setTimeout(() => {
+isReading = true;
+readWord(idx);
+}, 100);
+}
+};
+});
+
+speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+</script>
+</body>
+</html>
