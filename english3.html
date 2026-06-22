@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三年级英语单词朗读 - 总目录</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, -apple-system, sans-serif}
+body{
+    padding:20px;
+    max-width:700px;
+    margin:0 auto;
+    background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height:100vh;
+}
+h1{
+    text-align:center;
+    color:#fff;
+    margin:20px 0 30px;
+    font-size:26px;
+    text-shadow:0 2px 4px rgba(0,0,0,0.2);
+}
+.subtitle{
+    text-align:center;
+    color:rgba(255,255,255,0.85);
+    margin-bottom:30px;
+    font-size:15px;
+}
+.unit-list{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+.unit-card{
+    background:#fff;
+    border-radius:14px;
+    padding:18px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    text-decoration:none;
+    color:#333;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+    transition:all 0.2s;
+}
+.unit-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 6px 20px rgba(0,0,0,0.15);
+}
+.unit-card.disabled{
+    background:rgba(255,255,255,0.6);
+    color:#999;
+    pointer-events:none;
+}
+.unit-info{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+.unit-num{
+    width:48px;
+    height:48px;
+    border-radius:12px;
+    background:linear-gradient(135deg, #667eea, #764ba2);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    font-size:18px;
+    flex-shrink:0;
+}
+.unit-card.disabled .unit-num{
+    background:#ccc;
+}
+.unit-text h3{
+    font-size:17px;
+    margin-bottom:4px;
+}
+.unit-text p{
+    font-size:13px;
+    color:#888;
+}
+.unit-card.disabled .unit-text p{
+    color:#bbb;
+}
+.arrow{
+    font-size:20px;
+    color:#ccc;
+}
+.unit-card:not(.disabled):hover .arrow{
+    color:#667eea;
+}
+.badge{
+    background:#ff9500;
+    color:#fff;
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:10px;
+    margin-left:8px;
+    vertical-align:middle;
+}
+.unit-card.disabled .badge{
+    background:#ddd;
+}
+
+@media (max-width:500px){
+    body{padding:15px}
+    h1{font-size:22px;margin:15px 0 20px}
+    .unit-card{padding:14px 16px}
+    .unit-num{width:42px;height:42px;font-size:16px;border-radius:10px}
+    .unit-text h3{font-size:15px}
+    .unit-text p{font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<h1>📚 三年级英语单词朗读</h1>
+<p class="subtitle">点击下方单元开始学习</p>
+
+<div class="unit-list">
+
+    <a href="english3_1.html" class="unit-card">
+        <div class="unit-info">
+            <div class="unit-num">U1</div>
+            <div class="unit-text">
+                <h3>Unit 1 <span class="badge">已完成</span></h3>
+                <p>情绪与感受类单词 · 27个</p>
+            </div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+
+    <a href="english3_2.html" class="unit-card disabled">
+        <div class="unit-info">
+            <div class="unit-num">U2</div>
+            <div class="unit-text">
+                <h3>Unit 2 <span class="badge">待制作</span></h3>
+                <p>敬请期待</p>
+            </div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+
+    <a href="english3_3.html" class="unit-card disabled">
+        <div class="unit-info">
+            <div class="unit-num">U3</div>
+            <div class="unit-text">
+                <h3>Unit 3 <span class="badge">待制作</span></h3>
+                <p>敬请期待</p>
+            </div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+
+</div>
+
+<script>
+// 以后新增单元，只需要在上面复制一个 .unit-card 块，改链接和文字即可
+// 把 disabled 类去掉就变成可点击状态
+</script>
+
+</body>
+</html>
