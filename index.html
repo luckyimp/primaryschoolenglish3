@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>三年级英语单词朗读 - 总目录</title>
+    <link rel="manifest" href="manifest.json">
+    <!-- 兼容苹果设备 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="单词朗读">
+   
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, -apple-system, sans-serif}
 body{
@@ -190,6 +196,17 @@ h1{
 // 以后新增单元，只需要在上面复制一个 .unit-card 块，改链接和文字即可
 // 把 disabled 类去掉就变成可点击状态
 </script>
-
+<!-- 注册 Service Worker (只在这里写一次即可) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+                    console.log('ServiceWorker 注册成功');
+                }, function(err) {
+                    console.log('ServiceWorker 注册失败: ', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>
