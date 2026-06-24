@@ -1,4 +1,6 @@
-const CACHE_NAME = 'word-reader-v1';
+const CACHE_NAME = 'word-reader-v3'; // 版本号改了一下
+
+// 核心文件列出来，确保一打开就快
 const urlsToCache = [
     './',
     'index.html',
@@ -7,6 +9,7 @@ const urlsToCache = [
     'manifest.json'
 ];
 
+// 安装时只缓存核心文件
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -14,9 +17,34 @@ self.addEventListener('install', event => {
     );
 });
 
+// 动态缓存：按需缓存访问过的网页
 self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request)
-            .then(response => response || fetch(event.request))
+            .then(response => {
+                // 如果缓存里有，直接返回缓存
+                if (response) {
+                    return response;
+                }
+                
+                // 如果缓存里没有（比如点开了 unit1.html），就去网络请求
+                return fetch(event.request).then(
+                    response => {
+                        // 检查是否是有效的响应
+                        if (!response || response.status !== 200 || response.type !== 'basic') {
+                            return response;
+                        }
+                        
+                        // 复制一份响应存入缓存，下次再点这个网页就能离线打开了
+                        let responseToCache = response.clone();
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
+                                cache.put(event.request, responseToCache);
+                            });
+                            
+                        return response;
+                    }
+                );
+            })
     );
 });
