@@ -150,6 +150,25 @@ let startFromIndex = 0;
 let voices = [];
 let audio = document.getElementById('audioPlayer');
 
+// ========== 新增 MediaSession 初始化 ==========
+if ('mediaSession' in navigator) {
+  // 基础锁屏信息
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: "英语单词听力",
+    artist: "小学英语",
+    album: "单词背诵"
+  });
+  // 锁屏暂停/播放按钮绑定audio
+  navigator.mediaSession.setActionHandler('pause', () => {
+    stopReading();
+  });
+  navigator.mediaSession.setActionHandler('play', () => {
+    startReading();
+  });
+}
+// ========================================
+
+
 window.speechSynthesis.onvoiceschanged = () => {
     voices = window.speechSynthesis.getVoices();
 };
