@@ -1,3 +1,39 @@
+// ==========================================
+// PWA 后台音频保活机制
+// ==========================================
+let audioContext;
+let dummySource;
+let keepAliveAudio;
+
+function initKeepAlive() {
+    if (audioContext) return; // 如果已经初始化过，就不再执行
+    
+    try {
+        // 1. 创建一个音频上下文
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // 2. 生成一个极短的静音音频 (WAV 格式)
+        const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+            data[i] = 0; // 全部填0，代表静音
+        }
+        
+        dummySource = audioContext.createBufferSource();
+        dummySource.buffer = buffer;
+        dummySource.loop = true; // 循环播放这个静音文件
+        dummySource.connect(audioContext.destination);
+        
+        // 3. 播放这个静音文件，让系统认为有媒体在播放
+        dummySource.start(0);
+        
+        console.log('后台保活机制已启动');
+    } catch (e) {
+        console.error('保活机制启动失败:', e);
+    }
+}
+
+
 // 辅助函数：用浏览器自带语音朗读中文
 function speakText(text, speed, callback) {
     window.speechSynthesis.cancel(); 
@@ -112,7 +148,7 @@ function playSingleWordAudio(word) {
 
 function startReading() {
     stopReading(); 
-    
+    initKeepAlive(); 
     isPlaying = true;
     currentIndex = startFromIndex; 
     currentRepeat = 0;
