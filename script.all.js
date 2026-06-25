@@ -35,81 +35,10 @@ async function preloadChineseAudio(words) {
 }
 
 // ==========================================
-// PWA 后台音频保活机制
-// ==========================================
-let audioContext;
-let dummySource;
-
-function initKeepAlive() {
-    if (audioContext) return;
-
-    try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-        const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < data.length; i++) {
-            data[i] = 0;
-        }
-
-        dummySource = audioContext.createBufferSource();
-        dummySource.buffer = buffer;
-        dummySource.loop = true;
-        dummySource.connect(audioContext.destination);
-        dummySource.start(0);
-
-        audioContext.onstatechange = () => {
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-        };
-
-        console.log('后台保活机制已启动');
-    } catch (e) {
-        console.error('保活机制启动失败:', e);
-    }
-}
-
-function stopKeepAlive() {
-    if (dummySource) {
-        try { dummySource.stop(0); } catch (e) { }
-        dummySource.disconnect();
-        dummySource = null;
-    }
-    if (audioContext) {
-        audioContext.onstatechange = null;
-        audioContext.close().catch(() => { });
-        audioContext = null;
-    }
-}
-
-// ==========================================
 // speakText - Edge TTS 按需加载，speechSynthesis 兜底
 // ==========================================
 function speakText(text, speed, callback) {
-    const cached = chineseAudioCache.get(text);
-
-    function playAudio(blob) {
-        const url = URL.createObjectURL(blob);
-        const tempAudio = new Audio(url);
-        tempAudio.playbackRate = speed;
-        tempAudio.onended = () => { URL.revokeObjectURL(url); callback(); };
-        tempAudio.onerror = () => { URL.revokeObjectURL(url); speakTextFallback(text, speed, callback); };
-        tempAudio.play().catch(() => { URL.revokeObjectURL(url); speakTextFallback(text, speed, callback); });
-    }
-
-    if (cached) {
-        playAudio(cached);
-    } else {
-        edgeTTS(text)
-            .then(blob => {
-                chineseAudioCache.set(text, blob);
-                playAudio(blob);
-            })
-            .catch(() => {
-                speakTextFallback(text, speed, callback);
-            });
-    }
+    speakTextFallback(text, speed, callback);
 }
 
 function speakTextFallback(text, speed, callback) {
@@ -246,7 +175,6 @@ function playSingleWordAudio(word) {
 // ==========================================
 function startReading() {
     stopReading();
-    initKeepAlive();
     isPlaying = true;
     currentIndex = startFromIndex;
     currentRepeat = 0;
@@ -267,7 +195,72 @@ function startReading() {
 
     const speed = parseFloat(document.getElementById('speedControl').value);
 
+    if (document.getElementById('mergeMode').checked) {
+        startReadingMerged(wordsData.slice(startFromIndex), repeatTimes, speed);
+        return;
+    }
+
     playWord(wordsData[currentIndex], repeatTimes, speed, currentIndex);
+}
+
+// ==========================================
+// 合并模式 - 全部拼接到一个长文本，Edge TTS 一次合成
+// ==========================================
+function startReadingMerged(words, repeatTimes, speed) {
+    const parts = [];
+    for (const item of words) {
+        for (let r = 0; r < repeatTimes; r++) {
+            const spelled = item.spell.split('-').map(l => `, ${l}`).join('') + ',';
+            parts.push(`${item.word}${spelled} ${item.cn}`);
+        }
+    }
+    const fullText = parts.join(', ');
+
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: '合并朗读',
+            artist: `${words.length} 个单词`,
+            album: '单词朗读'
+        });
+        navigator.mediaSession.playbackState = 'playing';
+    }
+
+    const startBtn = document.getElementById('startBtn');
+    startBtn.textContent = '合成中...';
+    startBtn.disabled = true;
+
+    edgeTTS(fullText, 'zh-CN-XiaoxiaoNeural', speed)
+        .then(blob => {
+            if (!isPlaying) return;
+            startBtn.textContent = '开始朗读';
+            startBtn.disabled = false;
+
+            const url = URL.createObjectURL(blob);
+            const player = document.getElementById('audioPlayer');
+            player.src = url;
+            player.playbackRate = 1;
+            player.onended = () => {
+                URL.revokeObjectURL(url);
+                isPlaying = false;
+                document.querySelectorAll('.word-item').forEach(el => el.classList.remove('highlight'));
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.playbackState = 'paused';
+                }
+            };
+            player.play().catch(() => {
+                URL.revokeObjectURL(url);
+                isPlaying = false;
+            });
+        })
+        .catch(err => {
+            console.error('合并朗读失败:', err);
+            startBtn.textContent = '开始朗读';
+            startBtn.disabled = false;
+            isPlaying = false;
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'paused';
+            }
+        });
 }
 
 function stopReading() {
@@ -275,7 +268,6 @@ function stopReading() {
     audio.pause();
     audio.currentTime = 0;
     window.speechSynthesis.cancel();
-    stopKeepAlive();
     if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'paused';
     }
