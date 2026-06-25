@@ -6,30 +6,46 @@ let dummySource;
 let keepAliveAudio;
 
 function initKeepAlive() {
-    if (audioContext) return; // 如果已经初始化过，就不再执行
+    if (audioContext) return;
     
     try {
-        // 1. 创建一个音频上下文
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
-        // 2. 生成一个极短的静音音频 (WAV 格式)
         const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < data.length; i++) {
-            data[i] = 0; // 全部填0，代表静音
+            data[i] = 0;
         }
         
         dummySource = audioContext.createBufferSource();
         dummySource.buffer = buffer;
-        dummySource.loop = true; // 循环播放这个静音文件
+        dummySource.loop = true;
         dummySource.connect(audioContext.destination);
-        
-        // 3. 播放这个静音文件，让系统认为有媒体在播放
         dummySource.start(0);
+        
+        // 锁屏后 AudioContext 可能被系统 suspend，监听到后自动恢复
+        audioContext.onstatechange = () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        };
         
         console.log('后台保活机制已启动');
     } catch (e) {
         console.error('保活机制启动失败:', e);
+    }
+}
+
+function stopKeepAlive() {
+    if (dummySource) {
+        try { dummySource.stop(0); } catch (e) {}
+        dummySource.disconnect();
+        dummySource = null;
+    }
+    if (audioContext) {
+        audioContext.onstatechange = null;
+        audioContext.close().catch(() => {});
+        audioContext = null;
     }
 }
 
@@ -167,7 +183,8 @@ function stopReading() {
     isPlaying = false;
     audio.pause();
     audio.currentTime = 0;
-    window.speechSynthesis.cancel(); 
+    window.speechSynthesis.cancel();
+    stopKeepAlive();
     document.querySelectorAll('.word-item').forEach(el => el.classList.remove('highlight'));
 }
 
