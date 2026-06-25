@@ -1,35 +1,69 @@
 // ==========================================
+// Edge TTS - fetch 调用（纯前端，无后端）
+// ==========================================
+
+async function edgeTTS(text, voice = 'zh-CN-XiaoxiaoNeural', speed = 1.0) {
+    const response = await fetch('https://mstts.138308.xyz/v1/audio/speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            input: text,
+            voice: voice,
+            speed: speed,
+            pitch: "0",
+            style: "general"
+        })
+    });
+    if (!response.ok) throw new Error('Edge TTS 请求失败');
+    return await response.blob();
+}
+
+// ==========================================
+// 中文音频预加载缓存
+// ==========================================
+const chineseAudioCache = new Map();
+
+async function preloadChineseAudio(words) {
+    chineseAudioCache.clear();
+    const tasks = words.map(item =>
+        edgeTTS(item.cn)
+            .then(blob => { chineseAudioCache.set(item.cn, blob); })
+            .catch(e => { console.warn('Edge TTS 预加载失败:', item.cn, e.message); })
+    );
+    await Promise.allSettled(tasks);
+    console.log(`Edge TTS 预加载完成: ${chineseAudioCache.size}/${words.length}`);
+}
+
+// ==========================================
 // PWA 后台音频保活机制
 // ==========================================
 let audioContext;
 let dummySource;
-let keepAliveAudio;
 
 function initKeepAlive() {
     if (audioContext) return;
-    
+
     try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
+
         const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < data.length; i++) {
             data[i] = 0;
         }
-        
+
         dummySource = audioContext.createBufferSource();
         dummySource.buffer = buffer;
         dummySource.loop = true;
         dummySource.connect(audioContext.destination);
         dummySource.start(0);
-        
-        // 锁屏后 AudioContext 可能被系统 suspend，监听到后自动恢复
+
         audioContext.onstatechange = () => {
             if (audioContext.state === 'suspended') {
                 audioContext.resume();
             }
         };
-        
+
         console.log('后台保活机制已启动');
     } catch (e) {
         console.error('保活机制启动失败:', e);
@@ -49,10 +83,25 @@ function stopKeepAlive() {
     }
 }
 
-
-// 辅助函数：用浏览器自带语音朗读中文
+// ==========================================
+// speakText - Edge TTS 缓存优先，speechSynthesis 兜底
+// ==========================================
 function speakText(text, speed, callback) {
-    window.speechSynthesis.cancel(); 
+    const cached = chineseAudioCache.get(text);
+    if (cached) {
+        const url = URL.createObjectURL(cached);
+        const tempAudio = new Audio(url);
+        tempAudio.playbackRate = speed;
+        tempAudio.onended = () => { URL.revokeObjectURL(url); callback(); };
+        tempAudio.onerror = () => { URL.revokeObjectURL(url); speakTextFallback(text, speed, callback); };
+        tempAudio.play().catch(() => { URL.revokeObjectURL(url); speakTextFallback(text, speed, callback); });
+    } else {
+        speakTextFallback(text, speed, callback);
+    }
+}
+
+function speakTextFallback(text, speed, callback) {
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = speed;
     utterance.voice = voices.find(v => v.lang === 'zh-CN') || voices.find(v => v.lang.startsWith('zh'));
@@ -60,44 +109,53 @@ function speakText(text, speed, callback) {
     window.speechSynthesis.speak(utterance);
 }
 
-// 辅助函数：逐个字母朗读拼写，完全自己控制节奏
+// ==========================================
+// speakSpelling - 本地 MP3 优先，speechSynthesis 兜底
+// ==========================================
 function speakSpelling(spellStr, speed, callback) {
-    const letters = spellStr.split('-'); // 拆分成字母数组
+    const letters = spellStr.split('-');
     let index = 0;
-
-    // 获取用户输入的拼读间隔时间，默认50
     const interval = parseInt(document.getElementById('spellInterval').value) || 0;
 
-    function speakNextLetter() {
-        if (!isPlaying) return; // 如果中途被停止，直接中断
+    function playNextLetter() {
+        if (!isPlaying) return;
 
         if (index < letters.length) {
-            const letter = letters[index];
-            const utterance = new SpeechSynthesisUtterance(letter);
-            utterance.rate = speed;
-            utterance.lang = 'en-US';
-            utterance.voice = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en'));
-            
-            // 读完一个字母后的回调
-            utterance.onend = () => {
-                if (!isPlaying) return;
-                index++;
-                // 核心：使用用户设置的间隔时间
-                setTimeout(speakNextLetter, interval); 
-            };
-            
-            window.speechSynthesis.speak(utterance);
+            const letter = letters[index].toLowerCase().trim();
+
+            if (/^[a-z]$/.test(letter)) {
+                const letterAudio = new Audio(`audio/${letter}.mp3`);
+                letterAudio.playbackRate = speed;
+                letterAudio.onended = () => { index++; setTimeout(playNextLetter, interval); };
+                letterAudio.onerror = () => {
+                    speakLetterFallback(letter, speed, () => { index++; setTimeout(playNextLetter, interval); });
+                };
+                letterAudio.play().catch(() => {
+                    speakLetterFallback(letter, speed, () => { index++; setTimeout(playNextLetter, interval); });
+                });
+            } else {
+                speakLetterFallback(letter, speed, () => { index++; setTimeout(playNextLetter, interval); });
+            }
         } else {
-            // 所有字母读完，执行原有逻辑
             callback();
         }
     }
 
     window.speechSynthesis.cancel();
-    speakNextLetter(); // 开始读第一个字母
+    playNextLetter();
 }
 
-// 3. 核心播放逻辑：单词音频 -> 逐个字母拼写 -> 中文
+function speakLetterFallback(letter, speed, callback) {
+    const utterance = new SpeechSynthesisUtterance(letter);
+    utterance.rate = speed;
+    utterance.lang = 'en-US';
+    utterance.onend = callback;
+    window.speechSynthesis.speak(utterance);
+}
+
+// ==========================================
+// 核心播放逻辑：单词音频 -> 逐个字母拼写 -> 中文
+// ==========================================
 function playWord(item, repeatTimes, speed, index) {
     if (!isPlaying) return;
 
@@ -105,29 +163,35 @@ function playWord(item, repeatTimes, speed, index) {
     const currentEl = document.getElementById(`word-${index}`);
     if (currentEl) currentEl.classList.add('highlight');
 
+    // 更新 Media Session 显示当前单词
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: item.word,
+            artist: item.phonetic,
+            album: '单词朗读'
+        });
+    }
+
     // 步骤1：播放有道词典单词发音
     audio.src = `https://dict.youdao.com/dictvoice?audio=${item.word}&type=2`;
     audio.playbackRate = speed;
-    
+
     audio.onended = function() {
         if (!isPlaying) return;
-        
-        // 步骤2：单词音频播完，延时 300ms 调用逐字母拼写
+
         setTimeout(() => {
             speakSpelling(item.spell, speed, () => {
                 if (!isPlaying) return;
-                
-                // 步骤3：拼写播完，延时 300ms 读中文
+
                 setTimeout(() => {
                     speakText(item.cn, speed, () => {
                         if (!isPlaying) return;
-                        
-                        // 步骤4：中文播完，判断是否需要重复或读下一个
+
                         currentRepeat++;
                         if (currentRepeat >= repeatTimes) {
                             currentRepeat = 0;
                             currentIndex++;
-                            
+
                             if (currentIndex < wordsData.length) {
                                 setTimeout(() => {
                                     playWord(wordsData[currentIndex], repeatTimes, speed, currentIndex);
@@ -135,6 +199,9 @@ function playWord(item, repeatTimes, speed, index) {
                             } else {
                                 console.log("全部朗读完毕");
                                 isPlaying = false;
+                                if ('mediaSession' in navigator) {
+                                    navigator.mediaSession.playbackState = 'paused';
+                                }
                                 document.querySelectorAll('.word-item').forEach(el => el.classList.remove('highlight'));
                             }
                         } else {
@@ -147,35 +214,62 @@ function playWord(item, repeatTimes, speed, index) {
             });
         }, 300);
     };
-    
+
     audio.play();
 }
 
 function playSingleWordAudio(word) {
-    isPlaying = false; 
+    isPlaying = false;
     window.speechSynthesis.cancel();
     audio.pause();
     audio.currentTime = 0;
-    
+
     audio.src = `https://dict.youdao.com/dictvoice?audio=${word}&type=2`;
     audio.playbackRate = parseFloat(document.getElementById('speedControl').value);
     audio.play();
 }
 
-function startReading() {
-    stopReading(); 
-    initKeepAlive(); 
+// ==========================================
+// 开始/停止朗读
+// ==========================================
+async function startReading() {
+    stopReading();
+    initKeepAlive();
     isPlaying = true;
-    currentIndex = startFromIndex; 
+    currentIndex = startFromIndex;
     currentRepeat = 0;
-    
-    // 确保重复次数在 1-10 之间
+
+    // 注册 Media Session
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: '英语单词朗读',
+            artist: '加载中...',
+            album: '单词朗读'
+        });
+        navigator.mediaSession.playbackState = 'playing';
+    }
+
     let repeatTimes = parseInt(document.getElementById('repeatCount').value);
     if (isNaN(repeatTimes) || repeatTimes < 1) repeatTimes = 1;
     if (repeatTimes > 10) repeatTimes = 10;
-    
+
     const speed = parseFloat(document.getElementById('speedControl').value);
-    
+
+    // 显示加载状态
+    const startBtn = document.getElementById('startBtn');
+    const originalText = startBtn.textContent;
+    startBtn.textContent = '加载中...';
+    startBtn.disabled = true;
+
+    // 预加载全部中文音频
+    await preloadChineseAudio(wordsData);
+
+    startBtn.textContent = originalText;
+    startBtn.disabled = false;
+
+    // 如果预加载期间用户点了停止，就不继续了
+    if (!isPlaying) return;
+
     playWord(wordsData[currentIndex], repeatTimes, speed, currentIndex);
 }
 
@@ -185,21 +279,25 @@ function stopReading() {
     audio.currentTime = 0;
     window.speechSynthesis.cancel();
     stopKeepAlive();
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+    }
     document.querySelectorAll('.word-item').forEach(el => el.classList.remove('highlight'));
 }
 
-// 初始化函数
+// ==========================================
+// 初始化与渲染
+// ==========================================
 function init(words) {
     wordsData = words;
     renderWords();
 }
 
-// 全局变量
 let wordsData = [];
 let isPlaying = false;
 let currentIndex = 0;
 let currentRepeat = 0;
-let startFromIndex = 0; 
+let startFromIndex = 0;
 let voices = [];
 let audio = document.getElementById('audioPlayer');
 
@@ -207,11 +305,10 @@ window.speechSynthesis.onvoiceschanged = () => {
     voices = window.speechSynthesis.getVoices();
 };
 
-// 2. 渲染单词列表到页面上
 function renderWords() {
     const wordListContainer = document.getElementById('wordListContainer');
     wordListContainer.innerHTML = '';
-    
+
     wordsData.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'word-item';
@@ -221,16 +318,16 @@ function renderWords() {
             <span style="color:#666; font-size:12px">${item.spell}</span><br>
             <span style="color:#0078d4">${item.phonetic}</span> ${item.cn}
         `;
-        
+
         div.onclick = () => {
             playSingleWordAudio(item.word);
             startFromIndex = index;
             document.querySelectorAll('.word-item').forEach(el => el.classList.remove('selected'));
             div.classList.add('selected');
         };
-        
+
         wordListContainer.appendChild(div);
     });
-    
+
     document.getElementById('word-0').classList.add('selected');
 }
