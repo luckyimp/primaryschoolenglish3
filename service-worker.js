@@ -1,6 +1,5 @@
-const CACHE_NAME = 'word-reader-v3'; // 版本号改了一下
+const CACHE_NAME = 'word-reader-v4';
 
-// 核心文件列出来，确保一打开就快
 const urlsToCache = [
     './',
     'index.html',
@@ -9,11 +8,16 @@ const urlsToCache = [
     'manifest.json'
 ];
 
-// 安装时只缓存核心文件
+const audioFiles = [];
+for (let c = 97; c <= 122; c++) {
+    audioFiles.push(`audio/${String.fromCharCode(c)}.mp3`);
+}
+
+// 安装时缓存核心文件 + 字母音频
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
+            .then(cache => cache.addAll([...urlsToCache, ...audioFiles]))
     );
 });
 
