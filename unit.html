@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词朗读</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .back-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #0078d4;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .unit-title {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="back-link">&larr; 返回目录</a>
+    <h1 class="unit-title" id="unitTitle">加载中...</h1>
+    <p style="color: #666; font-size: 13px;">提示：点击单词可试听并设为朗读【起点】，然后点击"开始朗读"。</p>
+    <hr>
+
+    <div class="controls">
+        <label>每词重复：
+            <input type="number" id="repeatCount" min="1" max="10" value="2"> 次
+        </label>
+        
+        <label>语速：
+            <input type="range" id="speedControl" min="0.5" max="2" step="0.1" value="0.8" oninput="document.getElementById('speedValue').innerText = this.value">
+            <span id="speedValue">0.8</span> 
+        </label>
+
+        <label>拼读间隔：
+            <input type="number" id="spellInterval" min="0" max="2000" step="10" value="50"> 毫秒
+        </label>
+
+        <button id="startBtn" onclick="startReading()">开始朗读</button>
+        <button class="stop" id="stopBtn" onclick="stopReading()">停止</button>
+    </div>
+
+    <div class="word-list" id="wordListContainer"></div>
+</div>
+
+<audio id="audioPlayer"></audio>
+
+<script src="words-data.js"></script>
+<script src="script.all.js"></script>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+
+    const unit = WORDS_DATA[id];
+
+    if (unit) {
+        document.title = unit.title + ' - 单词朗读';
+        document.getElementById('unitTitle').textContent = unit.title;
+        init(unit.words);
+    } else {
+        document.title = '单元未找到 - 单词朗读';
+        document.getElementById('unitTitle').textContent = '单元未找到';
+        document.getElementById('wordListContainer').innerHTML = '<p style="color:#999;text-align:center;padding:40px">请从<a href="index.html">目录页</a>选择一个单元。</p>';
+    }
+</script>
+
+</body>
+</html>

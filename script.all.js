@@ -72,31 +72,43 @@ function initKeepAlive() {
 
 function stopKeepAlive() {
     if (dummySource) {
-        try { dummySource.stop(0); } catch (e) {}
+        try { dummySource.stop(0); } catch (e) { }
         dummySource.disconnect();
         dummySource = null;
     }
     if (audioContext) {
         audioContext.onstatechange = null;
-        audioContext.close().catch(() => {});
+        audioContext.close().catch(() => { });
         audioContext = null;
     }
 }
 
 // ==========================================
-// speakText - Edge TTS 缓存优先，speechSynthesis 兜底
+// speakText - Edge TTS 按需加载，speechSynthesis 兜底
 // ==========================================
 function speakText(text, speed, callback) {
     const cached = chineseAudioCache.get(text);
-    if (cached) {
-        const url = URL.createObjectURL(cached);
+
+    function playAudio(blob) {
+        const url = URL.createObjectURL(blob);
         const tempAudio = new Audio(url);
         tempAudio.playbackRate = speed;
         tempAudio.onended = () => { URL.revokeObjectURL(url); callback(); };
         tempAudio.onerror = () => { URL.revokeObjectURL(url); speakTextFallback(text, speed, callback); };
         tempAudio.play().catch(() => { URL.revokeObjectURL(url); speakTextFallback(text, speed, callback); });
+    }
+
+    if (cached) {
+        playAudio(cached);
     } else {
-        speakTextFallback(text, speed, callback);
+        edgeTTS(text)
+            .then(blob => {
+                chineseAudioCache.set(text, blob);
+                playAudio(blob);
+            })
+            .catch(() => {
+                speakTextFallback(text, speed, callback);
+            });
     }
 }
 
@@ -176,7 +188,7 @@ function playWord(item, repeatTimes, speed, index) {
     audio.src = `https://dict.youdao.com/dictvoice?audio=${item.word}&type=2`;
     audio.playbackRate = speed;
 
-    audio.onended = function() {
+    audio.onended = function () {
         if (!isPlaying) return;
 
         setTimeout(() => {
@@ -232,7 +244,7 @@ function playSingleWordAudio(word) {
 // ==========================================
 // 开始/停止朗读
 // ==========================================
-async function startReading() {
+function startReading() {
     stopReading();
     initKeepAlive();
     isPlaying = true;
@@ -254,21 +266,6 @@ async function startReading() {
     if (repeatTimes > 10) repeatTimes = 10;
 
     const speed = parseFloat(document.getElementById('speedControl').value);
-
-    // 显示加载状态
-    const startBtn = document.getElementById('startBtn');
-    const originalText = startBtn.textContent;
-    startBtn.textContent = '加载中...';
-    startBtn.disabled = true;
-
-    // 预加载全部中文音频
-    await preloadChineseAudio(wordsData);
-
-    startBtn.textContent = originalText;
-    startBtn.disabled = false;
-
-    // 如果预加载期间用户点了停止，就不继续了
-    if (!isPlaying) return;
 
     playWord(wordsData[currentIndex], repeatTimes, speed, currentIndex);
 }
