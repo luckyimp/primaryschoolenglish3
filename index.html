@@ -14,7 +14,7 @@
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, -apple-system, sans-serif}
 body{
     padding:20px;
-    max-width:700px;
+    max-width:780px;
     margin:0 auto;
     background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height:100vh;
@@ -109,8 +109,42 @@ h1{
 .unit-card.disabled .badge{
     background:#ddd;
 }
+.section-title{
+    color:#fff;
+    font-size:18px;
+    margin:24px 0 12px;
+    padding-left:4px;
+    border-left:4px solid rgba(255,255,255,0.6);
+    padding-left:12px;
+    opacity:0.9;
+}
+.section-title:first-of-type{
+    margin-top:0;
+}
+.unit-card.g3-up .unit-num{
+    background:linear-gradient(135deg, #f093fb, #f5576c);
+}
+.unit-card.g3-down .unit-num{
+    background:linear-gradient(135deg, #4facfe, #00f2fe);
+}
+.unit-card.cet4 .unit-num{
+    background:linear-gradient(135deg, #43e97b, #38f9d7);
+}
+.row{
+    display:flex;
+    gap:16px;
+}
+.col{
+    flex:1;
+    min-width:0;
+}
+.col .section-title:first-child{
+    margin-top:0;
+}
 
-@media (max-width:500px){
+@media (max-width:640px){
+    .row{flex-direction:column}
+}
     body{padding:15px}
     h1{font-size:22px;margin:15px 0 20px}
     .unit-card{padding:14px 16px}
@@ -123,73 +157,205 @@ h1{
 <body>
 
 <h1>📚 三年级英语单词朗读</h1>
-    <a href="unit.html?id=cet4_1">cet4</a> <a href="unit.html?id=cet4_2">cet4-2</a>   
 <p class="subtitle">点击下方单元开始学习</p>
 
+<div class="row">
+
+    <div class="col">
+        <div class="section-title" style="margin-top:0">🌸 三年级上</div>
+        <div class="unit-list">
+
+        <a href="unit.html?id=3s_welcome" class="unit-card g3-up">
+            <div class="unit-info">
+                <div class="unit-num">W</div>
+                <div class="unit-text">
+                    <h3>Welcome unit</h3>
+                    <p>入学准备 · 28个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3s_1" class="unit-card g3-up">
+            <div class="unit-info">
+                <div class="unit-num">U1</div>
+                <div class="unit-text">
+                    <h3>Unit 1</h3>
+                    <p>问候与介绍 · 34个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3s_2" class="unit-card g3-up">
+            <div class="unit-info">
+                <div class="unit-num">U2</div>
+                <div class="unit-text">
+                    <h3>Unit 2</h3>
+                    <p>颜色与日常 · 37个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3s_3" class="unit-card g3-up">
+            <div class="unit-info">
+                <div class="unit-num">U3</div>
+                <div class="unit-text">
+                    <h3>Unit 3</h3>
+                    <p>数字与动物 · 38个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3s_4" class="unit-card g3-up">
+            <div class="unit-info">
+                <div class="unit-num">U4</div>
+                <div class="unit-text">
+                    <h3>Unit 4</h3>
+                    <p>学习用品 · 22个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3s_5" class="unit-card g3-up">
+            <div class="unit-info">
+                <div class="unit-num">U5</div>
+                <div class="unit-text">
+                    <h3>Unit 5</h3>
+                    <p>教室场景 · 27个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3s_6" class="unit-card g3-up">
+            <div class="unit-info">
+                <div class="unit-num">U6</div>
+                <div class="unit-text">
+                    <h3>Unit 6</h3>
+                    <p>家庭与日常 · 32个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3s_7" class="unit-card g3-up">
+            <div class="unit-info">
+                <div class="unit-num">P</div>
+                <div class="unit-text">
+                    <h3>Plays &amp; 生活</h3>
+                    <p>故事与自然 · 43个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="section-title" style="margin-top:0">📖 三年级下</div>
+        <div class="unit-list">
+
+        <a href="unit.html?id=3_1" class="unit-card g3-down">
+            <div class="unit-info">
+                <div class="unit-num">U1</div>
+                <div class="unit-text">
+                    <h3>Unit 1</h3>
+                    <p>情绪与感受 · 27个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3_2" class="unit-card g3-down">
+            <div class="unit-info">
+                <div class="unit-num">U2</div>
+                <div class="unit-text">
+                    <h3>Unit 2</h3>
+                    <p>身体部位与动作 · 30个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3_3" class="unit-card g3-down">
+            <div class="unit-info">
+                <div class="unit-num">U3</div>
+                <div class="unit-text">
+                    <h3>Unit 3</h3>
+                    <p>服装 · 40个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3_4" class="unit-card g3-down">
+            <div class="unit-info">
+                <div class="unit-num">U4</div>
+                <div class="unit-text">
+                    <h3>Unit 4</h3>
+                    <p>天气 · 42个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3_5" class="unit-card g3-down">
+            <div class="unit-info">
+                <div class="unit-num">U5</div>
+                <div class="unit-text">
+                    <h3>Unit 5</h3>
+                    <p>星期与活动 · 26个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        <a href="unit.html?id=3_6" class="unit-card g3-down">
+            <div class="unit-info">
+                <div class="unit-num">U6</div>
+                <div class="unit-text">
+                    <h3>Unit 6</h3>
+                    <p>食物 · 32个</p>
+                </div>
+            </div>
+            <span class="arrow">›</span>
+        </a>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="section-title" style="margin-top:16px">📝 CET4</div>
 <div class="unit-list">
 
-    <a href="unit.html?id=3_1" class="unit-card">
+    <a href="unit.html?id=cet4_1" class="unit-card cet4">
         <div class="unit-info">
-            <div class="unit-num">U1</div>
+            <div class="unit-num">C1</div>
             <div class="unit-text">
-                <h3>Unit 1 <span class="badge">已完成</span></h3>
-                <p>情绪与感受类单词 · 27个</p>
+                <h3>CET4 Unit 1</h3>
+                <p>50个</p>
             </div>
         </div>
         <span class="arrow">›</span>
     </a>
 
-    <a href="unit.html?id=3_2" class="unit-card">
+    <a href="unit.html?id=cet4_2" class="unit-card cet4">
         <div class="unit-info">
-            <div class="unit-num">U2</div>
+            <div class="unit-num">C2</div>
             <div class="unit-text">
-                <h3>Unit 2 <span class="badge">已完成</span></h3>
-                <p>身体部位与动作类 共30个</p>
+                <h3>CET4 Unit 2</h3>
+                <p>50个</p>
             </div>
         </div>
         <span class="arrow">›</span>
     </a>
 
-    <a href="unit.html?id=3_3" class="unit-card">
-        <div class="unit-info">
-            <div class="unit-num">U3</div>
-            <div class="unit-text">
-                <h3>Unit 3 <span class="badge">已完成</span></h3>
-                <p>服装 40个</p>
-            </div>
-        </div>
-        <span class="arrow">›</span>
-    </a>
-<a href="unit.html?id=3_4" class="unit-card">
-        <div class="unit-info">
-            <div class="unit-num">U4</div>
-            <div class="unit-text">
-                <h3>Unit 4<span class="badge">已完成</span></h3>
-                <p>天气 42个</p>
-            </div>
-        </div>
-        <span class="arrow">›</span>
-</a>
-    <a href="unit.html?id=3_5" class="unit-card">
-        <div class="unit-info">
-            <div class="unit-num">U5</div>
-            <div class="unit-text">
-                <h3>Unit 5<span class="badge">已完成</span></h3>
-                <p>星期与活动 26个</p>
-            </div>
-        </div>
-        <span class="arrow">›</span>
-</a>
-    <a href="unit.html?id=3_6" class="unit-card">
-        <div class="unit-info">
-            <div class="unit-num">U6</div>
-            <div class="unit-text">
-                <h3>Unit 6<span class="badge">已完成</span></h3>
-                <p>食物 32个</p>
-            </div>
-        </div>
-        <span class="arrow">›</span>
-</a>
 </div>
 
 <script>
